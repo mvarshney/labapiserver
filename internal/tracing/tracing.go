@@ -28,7 +28,7 @@ func Initialize(ctx context.Context, serviceName string) (func(context.Context) 
 	}
 
 	// Choose exporter based on environment
-	collectorEndpoint := os.Getenv("OTEL_COLLECTOR_ENDPOINT")
+	collectorEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 
 	var exporter sdktrace.SpanExporter
 

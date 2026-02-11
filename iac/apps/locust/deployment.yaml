@@ -30,7 +30,7 @@ spec:
         - name: LOCUST_MODE
           value: "master"
         - name: LOCUST_HOST
-          value: "http://labapiserver-service:8080"
+          value: "http://labapiserver.labapiserver.svc.cluster.local"
         volumeMounts:
         - name: locustfile
           mountPath: /home/locust
@@ -68,7 +68,7 @@ spec:
         - name: LOCUST_MASTER_NODE_HOST
           value: "locust-master-service"
         - name: LOCUST_HOST
-          value: "http://labapiserver-service:8080"
+          value: "http://labapiserver.labapiserver.svc.cluster.local"
         volumeMounts:
         - name: locustfile
           mountPath: /home/locust

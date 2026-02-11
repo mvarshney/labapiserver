@@ -24,11 +24,11 @@ kube-prometheus-stack:
   grafana:
     enabled: true
     adminPassword: "admin"  # Change in production!
-    
+
     persistence:
       enabled: true
       size: 5Gi
-    
+
     resources:
       requests:
         memory: "256Mi"
@@ -36,6 +36,39 @@ kube-prometheus-stack:
       limits:
         memory: "512Mi"
         cpu: "200m"
+
+    # Datasources for observability stack
+    additionalDataSources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki-gateway.observability.svc.cluster.local
+        isDefault: false
+        jsonData:
+          maxLines: 1000
+
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://tempo.observability.svc.cluster.local:3100
+        isDefault: false
+        jsonData:
+          httpMethod: GET
+          tracesToLogs:
+            datasourceUid: 'Loki'
+            tags: ['job', 'instance', 'pod', 'namespace']
+            mappedTags: [{ key: 'service.name', value: 'service' }]
+            mapTagNamesEnabled: false
+            spanStartTimeShift: '1h'
+            spanEndTimeShift: '1h'
+            filterByTraceID: true
+            filterBySpanID: false
+          serviceMap:
+            datasourceUid: 'Prometheus'
+          search:
+            hide: false
+          nodeGraph:
+            enabled: true
   
   alertmanager:
     enabled: true

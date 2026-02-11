@@ -12,6 +12,7 @@ import (
 	metricshandler "labapiserver/internal/handlers/metrics"
 	"labapiserver/internal/handlers/salestax"
 	"labapiserver/internal/metrics"
+	"labapiserver/internal/middleware"
 	"labapiserver/pkg/health"
 )
 
@@ -45,7 +46,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", health.Handler())
-	mux.HandleFunc("/salestax", salestax.Handler())
+	mux.Handle("/salestax", middleware.ObservabilityMiddleware("salestax")(salestax.Handler()))
 
 	// Graceful shutdown
 	srv := &http.Server{

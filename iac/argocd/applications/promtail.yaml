@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: promtail
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: promtail
+    targetRevision: 6.16.6
+    helm:
+      valueFiles:
+        - $values/iac/apps/promtail/values.yaml
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: promtail
+      targetRevision: 6.16.6
+    - repoURL: https://github.com/mvarshney/labapiserver.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

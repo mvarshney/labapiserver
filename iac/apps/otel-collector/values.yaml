@@ -34,6 +34,14 @@ opentelemetry-collector:
       memory_limiter:
         check_interval: 1s
         limit_mib: 400
+        spike_limit_mib: 128
+        check_interval: 5s
+      
+      resource:
+        attributes:
+          - key: service.namespace
+            from_attribute: k8s.namespace.name
+            action: upsert
     
     exporters:
       prometheus:
@@ -42,27 +50,45 @@ opentelemetry-collector:
       logging:
         loglevel: info
       
-      otlp:
-        endpoint: "prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090"
+      prometheusremotewrite:
+        endpoint: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/write"
         tls:
           insecure: true
+      
+      loki:
+        endpoint: http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push
+        default_labels_enabled:
+          exporter: true
+          job: true
+          instance: true
+          level: true
+      
+      otlp/traces:
+        endpoint: http://tempo.observability.svc.cluster.local:4317
+        tls:
+          insecure: true
+      
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
     
     service:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [memory_limiter, batch]
-          exporters: [logging]
+          processors: [memory_limiter, batch, resource]
+          exporters: [otlp/traces]
         
         metrics:
           receivers: [otlp, prometheus]
-          processors: [memory_limiter, batch]
-          exporters: [prometheus, logging]
+          processors: [memory_limiter, batch, resource]
+          exporters: [prometheus, prometheusremotewrite, logging]
         
         logs:
           receivers: [otlp]
-          processors: [memory_limiter, batch]
-          exporters: [logging]
+          processors: [memory_limiter, batch, resource]
+          exporters: [loki]
   
   ports:
     otlp:

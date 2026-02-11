@@ -1,0 +1,70 @@
+loki:
+  auth_enabled: false
+  
+  commonConfig:
+    replication_factor: 1
+  
+  storage:
+    type: filesystem
+  
+  schemaConfig:
+    configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+  ingester:
+    chunk_encoding: snappy
+  
+  limits_config:
+    retention_period: 168h  # 7 days
+    ingestion_rate_mb: 10
+    ingestion_burst_size_mb: 20
+
+# Single binary mode for lab environment
+deploymentMode: SingleBinary
+
+singleBinary:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  persistence:
+    enabled: true
+    size: 10Gi
+
+# Disable components not needed in single binary mode
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+
+# Gateway configuration
+gateway:
+  enabled: true
+  service:
+    type: ClusterIP
+    port: 80
+
+# Enable service monitor for Prometheus
+monitoring:
+  serviceMonitor:
+    enabled: false
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+
+# Test configuration
+test:
+  enabled: false

@@ -90,8 +90,18 @@ env:
     value: "info"
   - name: OTEL_EXPORTER_OTLP_ENDPOINT
     value: "otel-collector-opentelemetry-collector.otel-collector.svc.cluster.local:4317"
+  - name: OTEL_EXPORTER_OTLP_PROTOCOL
+    value: "grpc"
   - name: OTEL_SERVICE_NAME
     value: "labapiserver"
+  - name: OTEL_EXPORTER_OTLP_INSECURE
+    value: "true"
+  - name: OTEL_TRACES_EXPORTER
+    value: "otlp"
+  - name: OTEL_METRICS_EXPORTER
+    value: "otlp"
+  - name: OTEL_LOGS_EXPORTER
+    value: "otlp"
 
 # Vault secrets - these will be injected by Vault agent
 vaultSecrets:

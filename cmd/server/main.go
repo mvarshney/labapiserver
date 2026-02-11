@@ -34,9 +34,9 @@ func main() {
 	}()
 
 	// Initialize OTEL metrics (push to collector)
-	collectorEndpoint := os.Getenv("OTEL_COLLECTOR_ENDPOINT")
+	collectorEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 	if collectorEndpoint == "" {
-		log.Println("OTEL_COLLECTOR_ENDPOINT not set, metrics will be exported to stdout")
+		log.Println("OTEL_EXPORTER_OTLP_ENDPOINT not set, metrics will be exported to stdout")
 		collectorEndpoint = "stdout"
 	}
 

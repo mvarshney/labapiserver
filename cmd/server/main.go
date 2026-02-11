@@ -13,11 +13,25 @@ import (
 	"labapiserver/internal/handlers/salestax"
 	"labapiserver/internal/metrics"
 	"labapiserver/internal/middleware"
+	"labapiserver/internal/tracing"
 	"labapiserver/pkg/health"
 )
 
 func main() {
 	ctx := context.Background()
+
+	// Initialize OTEL tracing
+	tracingShutdown, err := tracing.Initialize(ctx, "labapiserver")
+	if err != nil {
+		log.Fatalf("Failed to initialize tracing: %v", err)
+	}
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := tracingShutdown(ctx); err != nil {
+			log.Printf("Error shutting down tracing: %v", err)
+		}
+	}()
 
 	// Initialize OTEL metrics (push to collector)
 	collectorEndpoint := os.Getenv("OTEL_COLLECTOR_ENDPOINT")
@@ -46,7 +60,9 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", health.Handler())
-	mux.Handle("/salestax", middleware.ObservabilityMiddleware("salestax")(salestax.Handler()))
+	mux.Handle("/salestax",
+		middleware.TracingMiddleware("salestax")(
+			middleware.ObservabilityMiddleware("salestax")(salestax.Handler())))
 
 	// Graceful shutdown
 	srv := &http.Server{

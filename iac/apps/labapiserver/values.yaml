@@ -11,9 +11,7 @@ fullnameOverride: ""
 
 serviceAccount:
   create: true
-  annotations:
-    vault.hashicorp.com/agent-inject: "true"
-    vault.hashicorp.com/role: "labapiserver"
+  annotations: {}
   name: ""
 
 podAnnotations:
@@ -69,7 +67,7 @@ autoscaling:
 
 livenessProbe:
   httpGet:
-    path: /healthz
+    path: /health
     port: 8080
   initialDelaySeconds: 10
   periodSeconds: 10
@@ -78,7 +76,7 @@ livenessProbe:
 
 readinessProbe:
   httpGet:
-    path: /readyz
+    path: /health
     port: 8080
   initialDelaySeconds: 5
   periodSeconds: 5
@@ -97,7 +95,7 @@ env:
 
 # Vault secrets - these will be injected by Vault agent
 vaultSecrets:
-  enabled: true
+  enabled: false
   role: "labapiserver"
   path: "secret/data/labapiserver"
   secrets:

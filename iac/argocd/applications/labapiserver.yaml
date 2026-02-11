@@ -6,7 +6,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd-image-updater.argoproj.io/image-list: labapiserver=ghcr.io/REPLACE_WITH_YOUR_GITHUB_USERNAME/labapiserver
+    argocd-image-updater.argoproj.io/image-list: labapiserver=ghcr.io/mvarshney/labapiserver
     argocd-image-updater.argoproj.io/labapiserver.update-strategy: latest
     argocd-image-updater.argoproj.io/write-back-method: git
 spec:

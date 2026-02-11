@@ -1,0 +1,113 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/mvarshney/labapiserver
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/role: "labapiserver"
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+  annotations: {}
+
+ingress:
+  enabled: true
+  className: "kong"
+  annotations:
+    konghq.com/strip-path: "true"
+    konghq.com/protocols: "http,https"
+  hosts:
+    - host: api.local
+      paths:
+        - path: /api
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+env:
+  - name: PORT
+    value: "8080"
+  - name: LOG_LEVEL
+    value: "info"
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    value: "otel-collector-opentelemetry-collector.otel-collector.svc.cluster.local:4317"
+  - name: OTEL_SERVICE_NAME
+    value: "labapiserver"
+
+# Vault secrets - these will be injected by Vault agent
+vaultSecrets:
+  enabled: true
+  role: "labapiserver"
+  path: "secret/data/labapiserver"
+  secrets:
+    - key: "database_url"
+      envVar: "DATABASE_URL"
+    - key: "api_key"
+      envVar: "API_KEY"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

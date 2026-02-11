@@ -1,0 +1,9 @@
+apiVersion: v2
+name: fluent-bit
+description: Fluent Bit log processor and forwarder
+type: application
+version: 1.0.0
+dependencies:
+  - name: fluent-bit
+    version: 0.43.0
+    repository: https://fluent.github.io/helm-charts

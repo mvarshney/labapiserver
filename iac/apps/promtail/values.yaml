@@ -1,0 +1,36 @@
+config:
+  clients:
+    - url: http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push
+      tenant_id: 1
+
+  snippets:
+    pipelineStages:
+      - cri: {}
+      - labeldrop:
+          - filename
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            trace_id: trace_id
+            span_id: span_id
+      - labels:
+          level:
+          trace_id:
+          span_id:
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# DaemonSet configuration to run on all nodes
+daemonset:
+  enabled: true
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: false

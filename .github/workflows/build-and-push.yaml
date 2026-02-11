@@ -1,0 +1,55 @@
+name: Build and Push Container Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install ko
+        uses: ko-build/setup-ko@v0.6
+
+      - name: Build and push image
+        run: |
+          ko build --bare --platform=linux/amd64,linux/arm64 \
+            --tags latest \
+            --tags ${{ github.sha }} \
+            $([ "${{ github.ref_type }}" == "tag" ] && echo "--tags ${{ github.ref_name }}") \
+            --image-refs=image-refs.txt \
+            .
+        env:
+          KO_DOCKER_REPO: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Output image reference
+        run: cat image-refs.txt

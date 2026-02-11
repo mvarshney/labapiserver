@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: ghcr.io/REPLACE_WITH_YOUR_GITHUB_USERNAME/labapiserver
+  repository: ghcr.io/mvarshney/labapiserver
   pullPolicy: IfNotPresent
   tag: "latest"
 

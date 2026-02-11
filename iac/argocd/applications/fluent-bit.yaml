@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/REPLACE_WITH_YOUR_GITHUB_USERNAME/labapiserver.git
+    repoURL: https://github.com/mvarshney/labapiserver.git
     targetRevision: main
     path: iac/apps/fluent-bit
   destination:

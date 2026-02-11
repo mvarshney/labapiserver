@@ -20,7 +20,7 @@ import (
 func main() {
 	ctx := context.Background()
 
-	// Initialize OTEL tracing
+	// Initialize OTEL tracing (stdout or collector based on env)
 	tracingShutdown, err := tracing.Initialize(ctx, "labapiserver")
 	if err != nil {
 		log.Fatalf("Failed to initialize tracing: %v", err)
@@ -71,6 +71,7 @@ func main() {
 	}
 
 	go func() {
+		log.Println("Server starting on :8080")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed: %v", err)
 		}

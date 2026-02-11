@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust-master
+  namespace: default
+  labels:
+    app: locust
+    role: master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: locust
+      role: master
+  template:
+    metadata:
+      labels:
+        app: locust
+        role: master
+    spec:
+      containers:
+      - name: locust
+        image: locustio/locust:latest
+        ports:
+        - containerPort: 8089
+          name: web
+        - containerPort: 5557
+          name: master-bind
+        env:
+        - name: LOCUST_MODE
+          value: "master"
+        - name: LOCUST_HOST
+          value: "http://labapiserver-service:8080"
+        volumeMounts:
+        - name: locustfile
+          mountPath: /home/locust
+      volumes:
+      - name: locustfile
+        configMap:
+          name: locust-script
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust-worker
+  namespace: default
+  labels:
+    app: locust
+    role: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: locust
+      role: worker
+  template:
+    metadata:
+      labels:
+        app: locust
+        role: worker
+    spec:
+      containers:
+      - name: locust
+        image: locustio/locust:latest
+        env:
+        - name: LOCUST_MODE
+          value: "worker"
+        - name: LOCUST_MASTER_NODE_HOST
+          value: "locust-master-service"
+        - name: LOCUST_HOST
+          value: "http://labapiserver-service:8080"
+        volumeMounts:
+        - name: locustfile
+          mountPath: /home/locust
+      volumes:
+      - name: locustfile
+        configMap:
+          name: locust-script

@@ -1,17 +1,10 @@
 package salestax
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
-	"time"
 
-	"labapiserver/internal/metrics"
-
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
+	"labapiserver/internal/middleware"
 )
 
 type Request struct {
@@ -30,52 +23,23 @@ func Handler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		start := time.Now()
-		metrics.ActiveConnections.Add(ctx, 1)
-		defer metrics.ActiveConnections.Add(ctx, -1)
-
-		// Wrap ResponseWriter to capture status code and response size
-		rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK, body: &bytes.Buffer{}}
-
-		defer func() {
-			duration := time.Since(start).Seconds()
-			status := strconv.Itoa(rw.statusCode)
-
-			attrs := []attribute.KeyValue{
-				attribute.String("handler", "salestax"),
-				attribute.String("method", r.Method),
-				attribute.String("status", status),
-			}
-
-			metrics.RequestsTotal.Add(ctx, 1, metric.WithAttributes(attrs...))
-			metrics.RequestDuration.Record(ctx, duration, metric.WithAttributes(
-				attribute.String("handler", "salestax"),
-				attribute.String("method", r.Method),
-			))
-			metrics.ResponseSize.Record(ctx, int64(rw.body.Len()), metric.WithAttributes(
-				attribute.String("handler", "salestax"),
-			))
-		}()
 
 		if r.Method != http.MethodPost {
-			recordError(ctx, "method_not_allowed")
-			rw.statusCode = http.StatusMethodNotAllowed
-			http.Error(rw, "Method not allowed", http.StatusMethodNotAllowed)
+			middleware.RecordError(ctx, "salestax", "method_not_allowed")
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
 		var req Request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			recordError(ctx, "invalid_request_body")
-			rw.statusCode = http.StatusBadRequest
-			http.Error(rw, "Invalid request body", http.StatusBadRequest)
+			middleware.RecordError(ctx, "salestax", "invalid_request_body")
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		if req.Amount < 0 || taxRate < 0 {
-			recordError(ctx, "invalid_input")
-			rw.statusCode = http.StatusBadRequest
-			http.Error(rw, "Amount and tax rate must be non-negative", http.StatusBadRequest)
+			middleware.RecordError(ctx, "salestax", "invalid_input")
+			http.Error(w, "Amount and tax rate must be non-negative", http.StatusBadRequest)
 			return
 		}
 
@@ -89,33 +53,9 @@ func Handler() http.HandlerFunc {
 			TotalAmount: totalAmount,
 		}
 
-		rw.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(rw).Encode(resp); err != nil {
-			recordError(ctx, "encoding_error")
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			middleware.RecordError(ctx, "salestax", "encoding_error")
 		}
 	}
-}
-
-func recordError(ctx context.Context, errorType string) {
-	metrics.ErrorsTotal.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("handler", "salestax"),
-		attribute.String("error_type", errorType),
-	))
-}
-
-// responseWriter wraps http.ResponseWriter to capture status code and response size
-type responseWriter struct {
-	http.ResponseWriter
-	statusCode int
-	body       *bytes.Buffer
-}
-
-func (rw *responseWriter) WriteHeader(statusCode int) {
-	rw.statusCode = statusCode
-	rw.ResponseWriter.WriteHeader(statusCode)
-}
-
-func (rw *responseWriter) Write(b []byte) (int, error) {
-	rw.body.Write(b)
-	return rw.ResponseWriter.Write(b)
 }

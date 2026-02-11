@@ -1,0 +1,50 @@
+kong:
+  env:
+    database: "off"
+    nginx_worker_processes: "2"
+    proxy_access_log: /dev/stdout
+    admin_access_log: /dev/stdout
+    admin_gui_access_log: /dev/stdout
+    portal_api_access_log: /dev/stdout
+    proxy_error_log: /dev/stderr
+    admin_error_log: /dev/stderr
+    admin_gui_error_log: /dev/stderr
+    portal_api_error_log: /dev/stderr
+  
+  ingressController:
+    enabled: true
+    installCRDs: false
+    env:
+      feature_gates: GatewayAlpha=true
+  
+  proxy:
+    enabled: true
+    type: LoadBalancer
+    annotations: {}
+    http:
+      enabled: true
+      servicePort: 80
+      containerPort: 8000
+    tls:
+      enabled: true
+      servicePort: 443
+      containerPort: 8443
+  
+  admin:
+    enabled: true
+    type: ClusterIP
+    http:
+      enabled: true
+      servicePort: 8001
+      containerPort: 8001
+  
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  postgresql:
+    enabled: false

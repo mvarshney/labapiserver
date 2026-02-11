@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: otel-collector
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/REPLACE_WITH_YOUR_GITHUB_USERNAME/labapiserver.git
+    targetRevision: main
+    path: iac/apps/otel-collector
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: otel-collector
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

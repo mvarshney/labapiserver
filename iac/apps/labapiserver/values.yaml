@@ -43,6 +43,7 @@ ingress:
   annotations:
     konghq.com/strip-path: "true"
     konghq.com/protocols: "http,https"
+    kubernetes.io/ingress.class: "kong"
   hosts:
     - host: api.local
       paths:
